@@ -1,5 +1,4 @@
 ﻿using EmpCheckInOut.Api.DTOs.Manager;
-using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,15 +25,8 @@ namespace EmpCheckInOut.Api.Controllers
         [HttpGet("employees/{id}/dashboard")]
         public async Task<IActionResult> GetEmployeeDashboard(string id)
         {
-            try
-            {
-                var dashboard = await _managerService.GetEmployeeDashboardAsync(id);
-                return Ok(dashboard);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            var dashboard = await _managerService.GetEmployeeDashboardAsync(id);
+            return Ok(dashboard);
         }
 
         [HttpGet("leaverequests/pending")]
@@ -48,32 +40,16 @@ namespace EmpCheckInOut.Api.Controllers
         public async Task<IActionResult> ApproveVacation(string id)
         {
             var managerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            try
-            {
-                var result = await _managerService.ApproveVacationAsync(id, managerId);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _managerService.ApproveVacationAsync(id, managerId);
+            return Ok(result);
         }
 
         [HttpPut("leaverequests/{id}/reject")]
         public async Task<IActionResult> RejectVacation(string id, [FromBody] RejectRequestDto dto)
         {
             var managerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            try
-            {
-                var result = await _managerService.RejectVacationAsync(id, managerId, dto.RejectionReason);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _managerService.RejectVacationAsync(id, managerId, dto.RejectionReason);
+            return Ok(result);
         }
     }
 }

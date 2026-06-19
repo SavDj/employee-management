@@ -10,5 +10,6 @@
         public int VacationDaysUsed { get; set; }
         public int RemoteDays { get; set; }
         public int OfficeDays { get; set; }
+        public string ProfilePictureUrl { get; set; } = string.Empty;
     }
 }

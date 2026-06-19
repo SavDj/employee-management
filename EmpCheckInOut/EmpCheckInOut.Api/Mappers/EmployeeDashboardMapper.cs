@@ -5,7 +5,7 @@ namespace EmpCheckInOut.Api.Mappers
 {
     public static class EmployeeDashboardMapper
     {
-        public static EmployeeDashboardDto Map(User user, int sick, int vacation, int remote, int office) => new()
+        public static EmployeeDashboardDto Map(User user, int sick, int vacation, int remote, int office, string profilePictureUrl) => new()
         {
             UserId = user.Id,
             FullName = $"{user.FirstName} {user.LastName}",
@@ -14,7 +14,8 @@ namespace EmpCheckInOut.Api.Mappers
             SickDaysUsed = sick,
             VacationDaysUsed = vacation,
             RemoteDays = remote,
-            OfficeDays = office
+            OfficeDays = office,
+            ProfilePictureUrl = profilePictureUrl
         };
     }
 }

@@ -1,5 +1,6 @@
 ﻿using EmpCheckInOut.Api.Data;
 using EmpCheckInOut.Api.DTOs.Attendance;
+using EmpCheckInOut.Api.Exceptions;
 using EmpCheckInOut.Api.Mappers;
 using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Models.Enums;
@@ -27,15 +28,14 @@ namespace EmpCheckInOut.Api.Services
                 .AnyAsync();
 
             if (approvedLeave)
-                throw new InvalidOperationException("Cannot check in during an approved leave period.");
+                throw new BusinessRuleViolationException("Cannot check in during an approved leave period.");
 
             var existing = await _db.Attendances
                 .Find(a => a.UserId == userId && a.Date == today)
                 .FirstOrDefaultAsync();
 
             if (existing != null)
-                throw new InvalidOperationException("You have already checked in today.");
-
+                throw new BusinessRuleViolationException("You have already checked in today.");
 
             var attendance = new Attendance
             {
@@ -59,16 +59,15 @@ namespace EmpCheckInOut.Api.Services
                 .FirstOrDefaultAsync();
 
             if (attendance == null)
-                throw new InvalidOperationException("You have not checked in today.");
+                throw new BusinessRuleViolationException("You have not checked in today.");
 
             if (attendance.CheckOut.HasValue)
-                throw new InvalidOperationException("You have already checked out today.");
+                throw new BusinessRuleViolationException("You have already checked out today.");
 
             attendance.CheckOut = DateTime.UtcNow;
             await _db.Attendances.ReplaceOneAsync(a => a.Id == attendance.Id, attendance);
 
             return AttendanceMapper.ToDto(attendance);
         }
-
     }
 }

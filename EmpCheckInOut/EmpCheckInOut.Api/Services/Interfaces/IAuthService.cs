@@ -8,5 +8,6 @@ namespace EmpCheckInOut.Api.Services.Interfaces
     {
         Task<User> LoginAsync(LoginRequestDto dto);
         Task<User> RegisterAsync(RegistrationRequestDto dto);
+        Task<User> GetUserByIdAsync(string userId);
     }
 }

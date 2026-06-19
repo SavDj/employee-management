@@ -1,5 +1,6 @@
 ﻿using EmpCheckInOut.Api.Data;
 using EmpCheckInOut.Api.DTOs.Leave;
+using EmpCheckInOut.Api.Exceptions;
 using EmpCheckInOut.Api.Mappers;
 using EmpCheckInOut.Api.Models.Enums;
 using EmpCheckInOut.Api.Services.Interfaces;
@@ -16,9 +17,10 @@ namespace EmpCheckInOut.Api.Services
         public async Task<LeaveRequestResponseDto> CreateAsync(string userId, LeaveRequestDto dto)
         {
             if (dto.StartDate > dto.EndDate)
-                throw new InvalidOperationException("Start date must be before or equal to end date.");
+                throw new BusinessRuleViolationException("Start date must be before or equal to end date.");
+
             if (dto.StartDate < DateTime.UtcNow.Date)
-                throw new InvalidOperationException("Cannot request leave for past dates.");
+                throw new BusinessRuleViolationException("Cannot request leave for past dates.");
 
             var overlap = await _db.LeaveRequests.Find(lr =>
                 lr.UserId == userId &&
@@ -28,7 +30,7 @@ namespace EmpCheckInOut.Api.Services
             ).AnyAsync();
 
             if (overlap)
-                throw new InvalidOperationException("The requested dates overlap with an existing approved leave.");
+                throw new BusinessRuleViolationException("The requested dates overlap with an existing approved leave.");
 
             var leave = LeaveRequestMapper.MapToModel(dto, userId);
 

@@ -1,5 +1,6 @@
 using EmpCheckInOut.Api.Configuration;
 using EmpCheckInOut.Api.Data;
+using EmpCheckInOut.Api.Middlewares;
 using EmpCheckInOut.Api.Services;
 using EmpCheckInOut.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -67,6 +68,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseMiddleware<GlobalExceptionHandler>();
 
 app.UseHttpsRedirection();
 

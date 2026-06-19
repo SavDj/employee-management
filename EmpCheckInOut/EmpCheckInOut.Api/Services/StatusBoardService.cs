@@ -1,6 +1,7 @@
 ﻿using EmpCheckInOut.Api.Data;
 using EmpCheckInOut.Api.DTOs.Manager;
 using EmpCheckInOut.Api.DTOs.StatusBoard;
+using EmpCheckInOut.Api.Exceptions;
 using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Models.Enums;
 using EmpCheckInOut.Api.Services.Interfaces;
@@ -24,7 +25,7 @@ public class StatusBoardService : IStatusBoardService
 
         var currentUser = allUsers.FirstOrDefault(u => u.Id == currentUserId);
         if (currentUser == null)
-            throw new InvalidOperationException("User not found.");
+            throw new ResourceNotFoundException("User", currentUserId);
 
         var otherEmployees = allUsers.Where(u => u.Id != currentUserId).ToList();
         var userIds = allUsers.Select(u => u.Id).ToList();

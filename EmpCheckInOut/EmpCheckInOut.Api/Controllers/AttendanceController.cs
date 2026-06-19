@@ -1,5 +1,4 @@
 ﻿using EmpCheckInOut.Api.DTOs.Attendance;
-using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,15 +23,8 @@ namespace EmpCheckInOut.Api.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            try
-            {
-                var result = await _attendanceService.CheckInAsync(userId, dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _attendanceService.CheckInAsync(userId, dto);
+            return Ok(result);
         }
 
         [HttpPut("checkout")]
@@ -40,15 +32,8 @@ namespace EmpCheckInOut.Api.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            try
-            {
-                var result = await _attendanceService.CheckOutAsync(userId);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _attendanceService.CheckOutAsync(userId);
+            return Ok(result);
         }
     }
 }

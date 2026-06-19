@@ -1,6 +1,7 @@
 ﻿using EmpCheckInOut.Api.Data;
 using EmpCheckInOut.Api.DTOs.Leave;
 using EmpCheckInOut.Api.DTOs.Manager;
+using EmpCheckInOut.Api.Exceptions;
 using EmpCheckInOut.Api.Mappers;
 using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Models.Enums;
@@ -63,7 +64,8 @@ namespace EmpCheckInOut.Api.Services
                     UserId = user.Id,
                     FullName = $"{user.FirstName} {user.LastName}",
                     Department = user.Department,
-                    Status = status
+                    Status = status,
+                    ProfilePictureUrl = user.ProfilePictureUrl ?? string.Empty
                 };
             }).ToList();
         }
@@ -71,7 +73,10 @@ namespace EmpCheckInOut.Api.Services
         public async Task<EmployeeDashboardDto> GetEmployeeDashboardAsync(string employeeId)
         {
             var user = await _db.Users.Find(u => u.Id == employeeId).FirstOrDefaultAsync();
-            if (user == null) throw new InvalidOperationException("Employee not found.");
+            if (user == null)
+                throw new ResourceNotFoundException("Employee", employeeId);
+
+            var profilePictureUrl = user.ProfilePictureUrl ?? string.Empty;
 
             var currentYear = DateTime.UtcNow.Year;
             var startOfYear = new DateTime(currentYear, 1, 1);
@@ -96,7 +101,7 @@ namespace EmpCheckInOut.Api.Services
             var vacationDaysUsed = leaves.Where(l => l.LeaveType == LeaveType.Vacation)
                                          .Sum(l => (l.EndDate - l.StartDate).Days + 1);
 
-            return EmployeeDashboardMapper.Map(user, sickDaysUsed, vacationDaysUsed, remoteDays, officeDays);
+            return EmployeeDashboardMapper.Map(user, sickDaysUsed, vacationDaysUsed, remoteDays, officeDays, profilePictureUrl);
         }
 
         public async Task<List<LeaveRequestResponseDto>> GetPendingVacationRequestsAsync()
@@ -106,15 +111,33 @@ namespace EmpCheckInOut.Api.Services
                 lr.Status == LeaveStatus.Pending
             ).SortBy(lr => lr.StartDate).ToListAsync();
 
-            return pending.Select(LeaveRequestMapper.MapToDto).ToList();
+            var userIds = pending.Select(lr => lr.UserId).Distinct().ToList();
+
+            var users = await _db.Users.Find(u => userIds.Contains(u.Id)).ToListAsync();
+            var userDict = users.ToDictionary(u => u.Id, u => u);
+
+            return pending.Select(lr =>
+            {
+                var dto = LeaveRequestMapper.MapToDto(lr);
+
+                if (userDict.TryGetValue(lr.UserId, out var user))
+                {
+                    dto.EmployeeName = $"{user.FirstName} {user.LastName}";
+                    dto.EmployeeProfilePictureUrl = user.ProfilePictureUrl ?? string.Empty;
+                }
+
+                return dto;
+            }).ToList();
         }
 
         public async Task<LeaveRequestResponseDto> ApproveVacationAsync(string leaveRequestId, string managerId)
         {
             var leave = await _db.LeaveRequests.Find(lr => lr.Id == leaveRequestId).FirstOrDefaultAsync();
-            if (leave == null) throw new InvalidOperationException("Leave request not found.");
+            if (leave == null)
+                throw new ResourceNotFoundException("Leave request", leaveRequestId);
+
             if (leave.LeaveType != LeaveType.Vacation || leave.Status != LeaveStatus.Pending)
-                throw new InvalidOperationException("Only pending vacation requests can be approved.");
+                throw new BusinessRuleViolationException("Only pending vacation requests can be approved.");
 
             leave.Status = LeaveStatus.Approved;
             leave.ManagerId = managerId;
@@ -128,9 +151,11 @@ namespace EmpCheckInOut.Api.Services
         public async Task<LeaveRequestResponseDto> RejectVacationAsync(string leaveRequestId, string managerId, string rejectionReason)
         {
             var leave = await _db.LeaveRequests.Find(lr => lr.Id == leaveRequestId).FirstOrDefaultAsync();
-            if (leave == null) throw new InvalidOperationException("Leave request not found.");
+            if (leave == null)
+                throw new ResourceNotFoundException("Leave request", leaveRequestId);
+
             if (leave.LeaveType != LeaveType.Vacation || leave.Status != LeaveStatus.Pending)
-                throw new InvalidOperationException("Only pending vacation requests can be rejected.");
+                throw new BusinessRuleViolationException("Only pending vacation requests can be rejected.");
 
             leave.Status = LeaveStatus.Rejected;
             leave.ManagerId = managerId;

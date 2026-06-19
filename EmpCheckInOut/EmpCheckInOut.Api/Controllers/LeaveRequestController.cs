@@ -1,5 +1,4 @@
 ﻿using EmpCheckInOut.Api.DTOs.Leave;
-using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,23 +22,14 @@ namespace EmpCheckInOut.Api.Controllers
         public async Task<IActionResult> Create([FromBody] LeaveRequestDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            try
-            {
-                var result = await _leaveRequestService.CreateAsync(userId, dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _leaveRequestService.CreateAsync(userId, dto);
+            return Ok(result);
         }
 
         [HttpGet("my")]
         public async Task<IActionResult> GetMyRequests()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             var requests = await _leaveRequestService.GetMyRequestsAsync(userId);
             return Ok(requests);
         }

@@ -5,6 +5,7 @@ using EmpCheckInOut.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 
 namespace EmpCheckInOut.Api.Controllers
 {
@@ -30,37 +31,22 @@ namespace EmpCheckInOut.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
-            try
-            {
-                var user = await _authService.LoginAsync(dto);
-                var token = _tokenService.GenerateToken(user);
-                SetAccessTokenCookie(token);
+            var user = await _authService.LoginAsync(dto);
+            var token = _tokenService.GenerateToken(user);
+            SetAccessTokenCookie(token);
 
-                return Ok(AuthMapper.MapToLoginResponse(user));
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
-            }
+            return Ok(AuthMapper.MapToLoginResponse(user));
         }
 
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDto dto)
         {
-            try
-            {
-                var user = await _authService.RegisterAsync(dto);
+            var user = await _authService.RegisterAsync(dto);
+            var token = _tokenService.GenerateToken(user);
+            SetAccessTokenCookie(token);
 
-                var token = _tokenService.GenerateToken(user);
-                SetAccessTokenCookie(token);
-
-                return Ok(AuthMapper.MapToRegistrationResponse(user));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+            return Ok(AuthMapper.MapToRegistrationResponse(user));
         }
 
         [HttpPost("logout")]
@@ -76,6 +62,15 @@ namespace EmpCheckInOut.Api.Controllers
             });
 
             return Ok(new { message = "Logged out." });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _authService.GetUserByIdAsync(userId);
+            return Ok(AuthMapper.MapToLoginResponse(user));
         }
 
         private void SetAccessTokenCookie(string token)

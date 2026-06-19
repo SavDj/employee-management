@@ -12,5 +12,7 @@
         public string? ManagerId { get; set; }
         public DateTime? ManagerDecisionDate { get; set; }
         public string? RejectionReason { get; set; }
+        public string EmployeeName { get; set; } = string.Empty;
+        public string EmployeeProfilePictureUrl { get; set; } = string.Empty;
     }
 }

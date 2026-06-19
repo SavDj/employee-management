@@ -1,5 +1,6 @@
 ﻿using EmpCheckInOut.Api.Data;
 using EmpCheckInOut.Api.DTOs.Profile;
+using EmpCheckInOut.Api.Exceptions;
 using EmpCheckInOut.Api.Mappers;
 using EmpCheckInOut.Api.Models;
 using EmpCheckInOut.Api.Models.Enums;
@@ -20,7 +21,8 @@ namespace EmpCheckInOut.Api.Services
                 .Find(u => u.Id == userId)
                 .FirstOrDefaultAsync();
 
-            if (user == null) throw new InvalidOperationException("User not found.");
+            if (user == null)
+                throw new ResourceNotFoundException("User", userId);
 
             var currentYear = DateTime.UtcNow.Year;
             var startOfYear = new DateTime(currentYear, 1, 1);
@@ -53,7 +55,8 @@ namespace EmpCheckInOut.Api.Services
         public async Task<ProfileDto> UpdateProfileAsync(string userId, UpdateProfileRequestDto dto)
         {
             var user = await _db.Users.Find(u => u.Id == userId).FirstOrDefaultAsync();
-            if (user == null) throw new InvalidOperationException("User not found.");
+            if (user == null)
+                throw new ResourceNotFoundException("User", userId);
 
             user.Address = dto.Address;
             user.Phone = dto.Phone;
